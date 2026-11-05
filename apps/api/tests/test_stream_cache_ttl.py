@@ -9,7 +9,7 @@ from app.services.stream import cache_ttl, parse_expiry
         (10_000, 9_000, 880),
         (10_000, 9_880, 0),
         (10_000, 10_000, 0),
-        (10_000, 1_000, 18_000),
+        (10_000, 1_000, 8_880),
     ],
 )
 def test_cache_ttl_never_keeps_near_expired_urls(expires_at, now, expected):
