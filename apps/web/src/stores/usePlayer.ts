@@ -6,6 +6,7 @@ import type { RepeatMode, Track } from '@/types';
 interface PlayerState {
   queue: Track[];
   index: number;
+  nextIndex: number | null;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
@@ -18,6 +19,7 @@ interface PlayerState {
   playQueue: (tracks: Track[], start?: number) => void;
   togglePlay: () => void;
   next: (auto?: boolean) => void;
+  prepareNext: () => Track | undefined;
   prev: () => void;
   seek: (t: number) => void;
   setVolume: (v: number) => void;
@@ -36,6 +38,7 @@ export const usePlayer = create<PlayerState>()(
     (set, get) => ({
       queue: [],
       index: -1,
+      nextIndex: null,
       isPlaying: false,
       currentTime: 0,
       duration: 0,
@@ -51,6 +54,7 @@ export const usePlayer = create<PlayerState>()(
         set({
           queue: tracks,
           index: tracks.length ? Math.min(Math.max(start, 0), tracks.length - 1) : -1,
+          nextIndex: null,
           isPlaying: tracks.length > 0,
           currentTime: 0,
           duration: 0,
@@ -63,8 +67,20 @@ export const usePlayer = create<PlayerState>()(
         set((s) => ({ isPlaying: !s.isPlaying }));
       },
 
+      prepareNext: () => {
+        const { queue, index, shuffle, nextIndex } = get();
+        if (!queue.length || index < 0) return undefined;
+        if (!shuffle) return queue[index + 1];
+        if (nextIndex !== null && queue[nextIndex]) return queue[nextIndex];
+        if (queue.length < 2) return undefined;
+        let candidate = Math.floor(Math.random() * queue.length);
+        while (candidate === index) candidate = Math.floor(Math.random() * queue.length);
+        set({ nextIndex: candidate });
+        return queue[candidate];
+      },
+
       next: (auto = false) => {
-        const { queue, index, repeat, shuffle } = get();
+        const { queue, index, repeat, shuffle, nextIndex } = get();
         if (!queue.length) return;
         const audio = getAudio();
         if (auto && repeat === 'one') {
@@ -76,16 +92,18 @@ export const usePlayer = create<PlayerState>()(
         }
         let n: number;
         if (shuffle && queue.length > 1) {
-          do {
-            n = Math.floor(Math.random() * queue.length);
-          } while (n === index);
+          if (nextIndex !== null && nextIndex !== index) n = nextIndex;
+          else {
+            n = Math.floor(Math.random() * (queue.length - 1));
+            if (n >= index) n += 1;
+          }
         } else {
           n = index + 1;
         }
         if (n >= queue.length) {
           if (repeat === 'all') n = 0;
           else {
-            set({ isPlaying: false, currentTime: 0 });
+            set({ isPlaying: false, currentTime: 0, nextIndex: null });
             if (audio) audio.currentTime = 0;
             return;
           }
@@ -98,7 +116,7 @@ export const usePlayer = create<PlayerState>()(
           return;
         }
         history.push(index);
-        set({ index: n, currentTime: 0, duration: 0, error: null, isPlaying: true });
+        set({ index: n, nextIndex: null, currentTime: 0, duration: 0, error: null, isPlaying: true });
       },
 
       prev: () => {
@@ -110,7 +128,7 @@ export const usePlayer = create<PlayerState>()(
         const back = history.pop();
         const target = back !== undefined ? back : get().index - 1;
         if (target >= 0) {
-          set({ index: target, currentTime: 0, duration: 0, error: null, isPlaying: true });
+          set({ index: target, nextIndex: null, currentTime: 0, duration: 0, error: null, isPlaying: true });
         } else if (audio) {
           audio.currentTime = 0;
         }
@@ -124,7 +142,7 @@ export const usePlayer = create<PlayerState>()(
 
       setVolume: (v) => set({ volume: clamp01(v), muted: false }),
       toggleMute: () => set((s) => ({ muted: !s.muted })),
-      toggleShuffle: () => set((s) => ({ shuffle: !s.shuffle })),
+      toggleShuffle: () => set((s) => ({ shuffle: !s.shuffle, nextIndex: null })),
       cycleRepeat: () =>
         set((s) => ({ repeat: s.repeat === 'off' ? 'all' : s.repeat === 'all' ? 'one' : 'off' })),
       patch: (p) => set(p),
