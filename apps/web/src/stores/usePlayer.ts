@@ -68,13 +68,13 @@ export const usePlayer = create<PlayerState>()(
       },
 
       prepareNext: () => {
-        const { queue, index, shuffle, nextIndex } = get();
+        const { queue, index, shuffle, nextIndex, repeat } = get();
         if (!queue.length || index < 0) return undefined;
-        if (!shuffle) return queue[index + 1];
+        if (!shuffle) return queue[index + 1] ?? (repeat === 'all' ? queue[0] : undefined);
         if (nextIndex !== null && queue[nextIndex]) return queue[nextIndex];
-        if (queue.length < 2) return undefined;
-        let candidate = Math.floor(Math.random() * queue.length);
-        while (candidate === index) candidate = Math.floor(Math.random() * queue.length);
+        if (queue.length < 2) return repeat === 'all' ? queue[index] : undefined;
+        let candidate = Math.floor(Math.random() * (queue.length - 1));
+        if (candidate >= index) candidate += 1;
         set({ nextIndex: candidate });
         return queue[candidate];
       },
