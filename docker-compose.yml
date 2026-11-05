@@ -1,0 +1,31 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      retries: 5
+
+  api:
+    build: ./apps/api
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: http://localhost:3000
+      STREAM_MODE: proxy
+    ports:
+      - '8000:8000'
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        API_BASE_URL: http://api:8000
+    ports:
+      - '3000:3000'
+    depends_on:
+      - api
