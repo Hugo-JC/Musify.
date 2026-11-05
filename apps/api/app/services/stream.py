@@ -47,9 +47,9 @@ def parse_expiry(url: str, default_ttl: int = 3600) -> int:
 
 
 def cache_ttl(expires_at: int, now: int | None = None) -> int:
-    """TTL = expiração menos 2 minutos, limitado a [60 s, 5 h]."""
-    now = now or int(time.time())
-    return max(60, min(expires_at - now - 120, 5 * 3600))
+    """TTL conservador: expiração menos 2 minutos, limitado a [0, 5 h]."""
+    now = int(time.time()) if now is None else now
+    return max(0, min(expires_at - now - 120, 5 * 3600))
 
 
 def _extract(video_id: str) -> StreamInfo:
@@ -93,7 +93,9 @@ async def get_stream_info(video_id: str, force: bool = False) -> StreamInfo:
                 raise
             except Exception as exc:  # yt-dlp lança DownloadError, etc.
                 raise StreamError(f'Não foi possível obter o áudio: {exc}'[:300], 404) from exc
-        await cache.set(key, asdict(info), cache_ttl(info.expires_at))
+        ttl = cache_ttl(info.expires_at)
+        if ttl > 0:
+            await cache.set(key, asdict(info), ttl)
         return info
 
 

@@ -27,6 +27,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
+    warmedRef.current = null;
     if (!trackId) {
       a.removeAttribute('src');
       return;
@@ -101,8 +102,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (!a) return;
     patch({ currentTime: a.currentTime });
     // Prefetch: a meio da faixa, aquece o URL da seguinte.
-    const { queue, index, shuffle } = usePlayer.getState();
-    const nextId = !shuffle ? queue[index + 1]?.videoId : undefined;
+    const nextTrack = usePlayer.getState().prepareNext();
+    const nextId = nextTrack?.videoId;
     if (nextId && a.duration && a.currentTime / a.duration > 0.5 && warmedRef.current !== nextId) {
       warmedRef.current = nextId;
       void api.warm(nextId);
@@ -126,7 +127,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           const s = usePlayer.getState();
           if (!s.queue.length) return;
           s.patch({ error: 'Não foi possível reproduzir esta faixa.', buffering: false });
-          if (s.index < s.queue.length - 1) s.next();
+          if (s.index < s.queue.length - 1 || s.repeat === 'all' || s.shuffle) s.next();
           else s.patch({ isPlaying: false });
         }}
       />
