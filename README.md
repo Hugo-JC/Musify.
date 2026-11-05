@@ -99,3 +99,15 @@ Usar yt-dlp para reproduzir áudio do YouTube vai contra os termos de serviço d
 ## Próximos passos
 
 Responsivo abaixo de 1024 px, biblioteca em SQLite/Postgres, autenticação do ytmusicapi (OAuth) para recomendações reais, CI (GitHub Actions) e testes e2e com Playwright.
+
+
+## Reliability improvements
+
+- Stream URL cache TTL now stops at zero instead of forcing a 60-second lifetime for URLs near expiry. URLs with no safe cache window are returned for the current request but are not stored.
+- Shuffle prefetch reserves the upcoming track index in player state, so the warmed URL matches the track selected when playback advances.
+- Changing the queue, going back, or toggling Shuffle clears the reserved upcoming track.
+- The player resets its prefetch marker when the current track changes, allowing a track to be warmed again after a repeat cycle.
+
+## Remaining validation
+
+Run the API test suite, Ruff, frontend unit tests, TypeScript typecheck, and production build before merging. Manually verify normal queue, Shuffle on/off, repeat-one, repeat-all, previous/next, seek, and expired stream URL recovery.
