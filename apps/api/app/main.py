@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from .cache import cache
 from .config import settings
-from .routers import meta, stream
+from .routers import meta, music, stream
 from . import auth
 
 logging.basicConfig(level=logging.INFO)
@@ -52,5 +52,6 @@ async def health():
 
 
 app.include_router(meta.router, prefix='/api')
+app.include_router(music.router, prefix='/api')
 app.include_router(stream.router, prefix='/api')
 app.include_router(auth.router, prefix='/api')
