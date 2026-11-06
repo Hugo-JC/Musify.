@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     redis_url: str = 'redis://localhost:6379/0'
     cors_origins: str = 'http://localhost:3000'
     youtube_api_key: str = ''
+    audius_api_key: str = ''
     google_client_id: str = ''
     google_client_secret: str = ''
     google_redirect_uri: str = ''
