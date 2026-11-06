@@ -52,6 +52,15 @@ export function useAudiusTrending() {
   });
 }
 
+export function useYouTubeAccount() {
+  return useQuery({
+    queryKey: ['youtube-account'],
+    queryFn: api.account,
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
 /** Carrega uma playlist legada e começa a tocá-la. */
 export function usePlayPlaylist() {
   const playQueue = usePlayer((state) => state.playQueue);

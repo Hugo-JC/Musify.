@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { Heart, Home, Library, Search, User } from 'lucide-react';
 import clsx from 'clsx';
 import { useLibrary } from '@/stores/useLibrary';
+import { Cover } from '@/components/ui/Cover';
+import { useYouTubeAccount } from '@/lib/hooks';
 
 function NavItem({
   href,
@@ -33,6 +35,8 @@ function NavItem({
 export function Sidebar() {
   const likedCount = useLibrary((state) => state.liked.length);
   const pathname = usePathname();
+  const { data: account } = useYouTubeAccount();
+  const channel = account?.connected ? account.channel : null;
 
   return (
     <aside className="sidebar" aria-label="Navegação e biblioteca">
@@ -63,12 +67,21 @@ export function Sidebar() {
           </Link>
 
           <Link href="/account" className="library-item">
-            <span className="library-cover" style={{ background: 'linear-gradient(140deg, #41343a, #211c20)' }}>
-              <User className="h-5 w-5" aria-hidden />
-            </span>
+            {channel?.thumbnail ? (
+              <Cover
+                src={channel.thumbnail}
+                alt=""
+                round
+                className="library-cover youtube-account-cover"
+              />
+            ) : (
+              <span className="library-cover youtube-account-cover">
+                <User className="h-5 w-5" aria-hidden />
+              </span>
+            )}
             <span className="library-item-copy">
-              <span className="library-item-title">YouTube account</span>
-              <span className="library-item-meta">Connect your library</span>
+              <span className="library-item-title">{channel?.title || 'YouTube account'}</span>
+              <span className="library-item-meta">{channel ? 'Canal YouTube' : 'Connect your library'}</span>
             </span>
           </Link>
         </div>

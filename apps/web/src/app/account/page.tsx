@@ -1,40 +1,30 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle2, ExternalLink, KeyRound, LogOut, Music2, ShieldCheck, Sparkles, Youtube } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Cover } from '@/components/ui/Cover';
 import { Skeleton } from '@/components/ui/States';
 import { api } from '@/lib/api';
 import type { YouTubeAccount } from '@/types';
+import { useYouTubeAccount } from '@/lib/hooks';
 
 function AccountContent() {
   const searchParams = useSearchParams();
   const notice = searchParams.get('youtube');
-  const [account, setAccount] = useState<YouTubeAccount | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: account, isLoading: loading } = useYouTubeAccount();
   const [disconnecting, setDisconnecting] = useState(false);
-
-  const loadAccount = async () => {
-    try {
-      const data = await api.account();
-      setAccount(data);
-    } catch {
-      setAccount({ connected: false, channel: null });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadAccount();
-  }, []);
 
   const handleDisconnect = async () => {
     setDisconnecting(true);
     try {
       await api.disconnectAccount();
-      await loadAccount();
+      queryClient.setQueryData<YouTubeAccount>(['youtube-account'], {
+        connected: false,
+        channel: null,
+      });
     } catch {
       /* ignore */
     } finally {
