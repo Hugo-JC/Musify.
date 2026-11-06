@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Heart, Home, Search, UserRound } from 'lucide-react';
+import { Heart, Home, Search, User } from 'lucide-react';
 import clsx from 'clsx';
 
 const ITEMS = [
