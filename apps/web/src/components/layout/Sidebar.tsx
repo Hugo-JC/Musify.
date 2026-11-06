@@ -43,7 +43,7 @@ export function Sidebar() {
 
       <section className="library-block" aria-labelledby="library-heading">
         <div className="library-heading" id="library-heading">
-          <LibraryBig className="h-6 w-6" strokeWidth={2.4} aria-hidden />
+          <Library className="h-6 w-6" strokeWidth={2.4} aria-hidden />
           <span>Your Library</span>
         </div>
 
@@ -64,7 +64,7 @@ export function Sidebar() {
 
           <Link href="/account" className="library-item">
             <span className="library-cover" style={{ background: 'linear-gradient(140deg, #41343a, #211c20)' }}>
-              <UserRound className="h-5 w-5" aria-hidden />
+              <User className="h-5 w-5" aria-hidden />
             </span>
             <span className="library-item-copy">
               <span className="library-item-title">YouTube account</span>
