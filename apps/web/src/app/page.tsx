@@ -6,7 +6,7 @@ import { AlbumCard } from '@/components/home/AlbumCard';
 import { FilterTabs, type Tab } from '@/components/home/FilterTabs';
 import { MoodSelector } from '@/components/home/MoodSelector';
 import { QuickCard } from '@/components/home/QuickCard';
-import { Skeleton } from '@/components/ui/States';
+import { ApiErrorAlert, Message, Skeleton } from '@/components/ui/States';
 import { greeting } from '@/lib/format';
 import { useHome, useMood } from '@/lib/hooks';
 import type { MoodKey } from '@/types';
@@ -20,9 +20,16 @@ export default function HomePage() {
 
   useEffect(() => setHello(greeting()), []);
 
-  const demo = home.data?.demo ?? false;
-  const quick = (mood && moodQuery.data?.length ? moodQuery.data : home.data?.data.quick ?? []).slice(0, 6);
-  const madeForYou = home.data?.data.madeForYou ?? [];
+  const quick = (mood && moodQuery.data?.length ? moodQuery.data : home.data?.quick ?? []).slice(0, 6);
+  const madeForYou = home.data?.madeForYou ?? [];
+
+  const hasError = Boolean(home.error) || (Boolean(mood) && Boolean(moodQuery.error));
+  const errorMessage = (home.error as Error)?.message || (moodQuery.error as Error)?.message;
+
+  const handleRefresh = () => {
+    void home.refetch();
+    if (mood) void moodQuery.refetch();
+  };
 
   return (
     <div className="flex flex-col gap-10">
@@ -36,16 +43,24 @@ export default function HomePage() {
         <MoodSelector value={mood} onChange={setMood} />
       </section>
 
-      {demo && (
-        <p role="status" className="-mt-4 rounded-xl border border-line bg-surface-2 px-4 py-2 text-sm text-muted">
-          Modo demo: a API não respondeu, por isso estão a ser mostrados dados de exemplo. Inicia o backend para ver playlists reais.
-        </p>
-      )}
+      {hasError && <ApiErrorAlert message={errorMessage} onRetry={handleRefresh} />}
 
-      <section aria-label="Atalhos" className="grid grid-cols-3 gap-4">
-        {home.isLoading || (mood && moodQuery.isLoading && !home.data)
-          ? Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-[76px]" />)
-          : quick.map((c) => <QuickCard key={c.id} card={c} />)}
+      <section aria-label="Atalhos">
+        {home.isLoading || (mood && moodQuery.isLoading && !home.data) ? (
+          <div className="grid grid-cols-3 gap-4">
+            {Array.from({ length: 6 }, (_, i) => (
+              <Skeleton key={i} className="h-[76px]" />
+            ))}
+          </div>
+        ) : quick.length > 0 ? (
+          <div className="grid grid-cols-3 gap-4">
+            {quick.map((c) => (
+              <QuickCard key={c.id} card={c} />
+            ))}
+          </div>
+        ) : !hasError ? (
+          <Message title="Nenhum atalho disponível de momento" hint="Experimenta pesquisar ou selecionar outro mood." />
+        ) : null}
       </section>
 
       <section aria-labelledby="made-for-you">
@@ -53,17 +68,25 @@ export default function HomePage() {
           <h2 id="made-for-you" className="text-2xl font-bold">
             Made For You
           </h2>
-          <Link href="/search?q=daily%20mix" className="pr-4 text-sm text-muted hover:text-white">
+          <Link href="/search?q=daily%20mix" className="pr-4 text-sm text-muted transition hover:text-white">
             Show all
           </Link>
         </div>
-        <div className="grid grid-cols-3 gap-4">
-          {home.isLoading
-            ? Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-[356px]" />)
-            : madeForYou.slice(0, 3).map((c, i) => (
-                <AlbumCard key={c.id} card={c} position={i + 1} badge={i === 0 ? 'Daily rotation' : undefined} />
-              ))}
-        </div>
+        {home.isLoading ? (
+          <div className="grid grid-cols-3 gap-4">
+            {Array.from({ length: 3 }, (_, i) => (
+              <Skeleton key={i} className="h-[356px]" />
+            ))}
+          </div>
+        ) : madeForYou.length > 0 ? (
+          <div className="grid grid-cols-3 gap-4">
+            {madeForYou.slice(0, 3).map((c, i) => (
+              <AlbumCard key={c.id} card={c} position={i + 1} badge={i === 0 ? 'Daily rotation' : undefined} />
+            ))}
+          </div>
+        ) : !hasError ? (
+          <Message title="Sem recomendações recentes" hint="Liga a tua conta YouTube na secção Conta para obteres recomendações baseadas no teu perfil." />
+        ) : null}
       </section>
     </div>
   );

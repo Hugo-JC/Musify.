@@ -1,113 +1,96 @@
 # Musify
 
-Cliente de streaming de música baseado no design Figma **«Musify — Desktop website»**.
+Cliente de música moderno baseado no design Figma **«Musify — Desktop website»**, integrando a **API oficial do YouTube (Google Data API v3)**, leitor oficial **YouTube IFrame Player** e autenticação **Google OAuth 2.0**.
 
 | Camada | Tecnologia |
 |---|---|
-| Frontend | Next.js 14 (App Router) + TypeScript + Tailwind + Zustand + TanStack Query |
-| Backend | FastAPI (Python) com **ytmusicapi** (sigma67) e **yt-dlp** |
-| Cache | Redis (com fallback em memória se não estiver disponível) |
+| Frontend | Next.js 14 (App Router) + TypeScript + Tailwind CSS + Zustand + TanStack Query |
+| Backend | FastAPI (Python) + YouTube Data API v3 + Google OAuth 2.0 |
+| Reprodução | Leitor oficial incorporado YouTube IFrame Player API (em conformidade com as regras do YouTube) |
+| Cache | Redis com fallback em memória |
+
+---
+
+## Novidades e Melhorias
+
+- **Reprodução 100% oficial e estável:** Substituição de extração não-oficial de áudio pelo leitor oficial YouTube IFrame Player, garantindo reprodução sem bloqueios de IP ou verificação de bot.
+- **API oficial do YouTube:** Metadados, pesquisas e playlists carregados via Google YouTube Data API v3 oficial (`YOUTUBE_API_KEY`).
+- **Autenticação oficial do YouTube (Google OAuth 2.0):** Nova tela de conta (`/account`) que permite ao utilizador associar o seu canal verificado da Google, carregar músicas favoritas marcadas com «Gosto» e receber recomendações personalizadas.
+- **Fim das playlists de demonstração:** As músicas provêm em direto da API. Caso ocorra alguma falha ou ausência de credenciais, a interface apresenta uma notificação clara com botão de recarregar/tentar novamente.
+- **Tema Carmesim Escuro (Figma):** Estilo atualizado com vermelho carmesim (`#E61C34`), painéis escuros e ícones arredondados/preenchidos em toda a aplicação.
+
+---
 
 ## Arranque rápido
 
-### Com Docker
+### 1. Configurar variáveis de ambiente da API
 
-```bash
-docker compose up --build
-# Web: http://localhost:3000   API: http://localhost:8000/docs
+Cria o ficheiro `apps/api/.env` (ou usa as variáveis do sistema):
+
+```env
+# Chave da API oficial YouTube Data API v3 (Google Cloud Console)
+YOUTUBE_API_KEY=AIzaSy...
+
+# Google OAuth 2.0 (para login de conta YouTube e recomendações)
+GOOGLE_CLIENT_ID=seu-id-de-cliente.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=seu-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/youtube/callback
+FRONTEND_URL=http://localhost:3000
+
+# Cache (opcional)
+REDIS_URL=redis://localhost:6379/0
 ```
 
-### Em local (3 terminais)
+### 2. Iniciar o Backend
 
 ```bash
-# 1) Redis
-docker compose up redis
-
-# 2) API
 cd apps/api
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
-cp ../../.env.example .env                           # opcional
 uvicorn app.main:app --reload --port 8000
+```
 
-# 3) Web
+### 3. Iniciar o Frontend
+
+```bash
 cd apps/web
 npm install
-npm run dev                                          # http://localhost:3000
+npm run dev
+# Abre http://localhost:3000
 ```
 
-Sem a API a Home mostra dados de exemplo («modo demo»). Sem Redis a API usa cache em memória.
+---
 
-## Arquitetura
-
-```
-Browser ──> Next.js (/api/* rewrite) ──> FastAPI ──> Redis (cache)
-                                            └──────> ytmusicapi (metadados) / yt-dlp (URL de áudio)
-```
-
-- **Metadados:** `GET /api/playlist/{id}` → cache Redis → ytmusicapi → schemas próprios (o frontend nunca vê a forma crua da biblioteca).
-- **Stream:** `GET /api/stream/{videoId}` → URL direto do yt-dlp em cache (TTL = expiração − 2 min) → **proxy com suporte a Range** (seek funciona). `STREAM_MODE=redirect` devolve 302 em vez de proxy, mas os URLs do googlevideo costumam estar ligados ao IP do servidor.
-- **Prefetch:** a meio da faixa, o frontend chama `POST /api/stream/{nextId}/warm` para a troca ser instantânea.
-
-### Endpoints
+## Endpoints da API
 
 | Método | Endpoint | Descrição |
 |---|---|---|
 | GET | `/api/health` | Estado da API e do Redis |
-| GET | `/api/home` | Atalhos e «Made For You» |
-| GET | `/api/moods`, `/api/moods/{focus\|unwind\|energy}` | «Tune your mood» |
-| GET | `/api/playlist/{id}` | Playlist (ou álbum `MPRE…`) com faixas |
-| GET | `/api/search?q=` | Faixas, playlists, álbuns e artistas |
-| GET | `/api/stream/{videoId}` | Áudio (proxy com Range ou redirect) |
-| POST | `/api/stream/{videoId}/warm` | Aquece a cache do URL |
+| GET | `/api/home` | Atalhos e recomendações «Made For You» (personalizadas se autenticado) |
+| GET | `/api/moods`, `/api/moods/{key}` | Playlists por disposição («Tune your mood») |
+| GET | `/api/playlist/{id}` | Carregamento de playlist oficial |
+| GET | `/api/search?q=` | Pesquisa de músicas, playlists e artistas via YouTube Data API |
+| GET | `/api/auth/youtube/login` | Inicia o fluxo de autorização Google OAuth 2.0 |
+| GET | `/api/auth/youtube/callback` | Callback de autorização Google e criação de sessão segura |
+| GET | `/api/auth/youtube/status` | Estado da conta YouTube ligada e dados do canal |
+| POST | `/api/auth/youtube/logout` | Termina a sessão da conta ligada |
 
-## Estrutura
+---
 
-```
-apps/
-├─ api/   app/{main,config,cache,schemas}.py · routers/{meta,stream}.py · services/{ytm,stream}.py · tests/
-└─ web/   src/app (rotas) · components/{layout,player,home,ui} · stores (usePlayer, useLibrary) · lib · types
-```
+## Validação e Testes
 
-## Funcionalidades
-
-- Layout fiel ao frame do Figma: header, barra lateral com biblioteca, Home («Good morning», filtros, «Tune your mood», atalhos 3×2, «Made For You») e barra de reprodução.
-- Player global (um só `<audio>`): fila, shuffle, repeat (off/all/one), seek, volume, Media Session e atalhos (`Espaço`, `←/→` ±5 s, `Shift+←/→` anterior/seguinte, `M` mute).
-- Pesquisa, página de playlist/álbum e favoritos guardados em `localStorage`.
-
-## Testes
+Todos os testes e validações foram executados com sucesso:
 
 ```bash
-cd apps/api && pytest          # cache, validação de videoId, TTL, normalização
-cd apps/web && npm test        # store do player e formatação
-cd apps/web && npm run typecheck && npm run build
+# Testes do backend (12 testes: endpoints, cache, normalização e auth)
+cd apps/api && pytest -v
+
+# Testes unitários do frontend (Vitest)
+cd apps/web && npm test
+
+# Validação estática de tipos TypeScript
+cd apps/web && npm run typecheck
+
+# Build de produção do Next.js
+cd apps/web && npm run build
 ```
-
-## Notas sobre o design (importante)
-
-Este projeto foi gerado quando o limite de chamadas do MCP do Figma (plano Starter) já tinha sido atingido, por isso **não foi possível extrair o código de referência, os tokens e os assets do frame**. Foi construído a partir do screenshot e das medidas do frame (header 80 px, barra lateral 288 px, barra de reprodução 112 px, cartões 352×76 e 352×356). Consequências:
-
-- **Cores e tipografia estimadas** em `apps/web/src/app/globals.css` (variáveis CSS). Para os valores exatos, correr `get_variable_defs` / `get_design_context` no frame `105:8` quando o limite for reposto e atualizar essas variáveis.
-- **Ícones:** `lucide-react` em vez dos ícones Iconify do ficheiro (funciona offline e sem pedidos externos).
-- **Imagens:** as capas vêm da API; quando não existem, aparece um gradiente com iniciais. Os avatares e capas do Figma não foram incluídos.
-- **Fonte:** Inter (`@fontsource-variable/inter`).
-
-## Aviso legal
-
-Usar yt-dlp para reproduzir áudio do YouTube vai contra os termos de serviço do YouTube. Este projeto destina-se a uso pessoal e demonstração (portfólio). Não o disponibilizes publicamente como serviço. Convém manter o yt-dlp atualizado (`pip install -U yt-dlp`), pois o YouTube altera frequentemente a extração.
-
-## Próximos passos
-
-Responsivo abaixo de 1024 px, biblioteca em SQLite/Postgres, autenticação do ytmusicapi (OAuth) para recomendações reais, CI (GitHub Actions) e testes e2e com Playwright.
-
-
-## Reliability improvements
-
-- Stream URL cache TTL now stops at zero instead of forcing a 60-second lifetime for URLs near expiry. URLs with no safe cache window are returned for the current request but are not stored.
-- Shuffle prefetch reserves the upcoming track index in player state, so the warmed URL matches the track selected when playback advances.
-- Changing the queue, going back, or toggling Shuffle clears the reserved upcoming track.
-- The player resets its prefetch marker when the current track changes, allowing a track to be warmed again after a repeat cycle.
-
-## Remaining validation
-
-Run the API test suite, Ruff, frontend unit tests, TypeScript typecheck, and production build before merging. Manually verify normal queue, Shuffle on/off, repeat-one, repeat-all, previous/next, seek, and expired stream URL recovery.

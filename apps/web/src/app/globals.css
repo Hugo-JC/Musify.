@@ -3,23 +3,22 @@
 @tailwind utilities;
 
 /*
- * Tokens estimados a partir do screenshot do frame "Musify — Desktop website".
- * Substituir pelos valores exatos do Figma quando o MCP estiver disponível
- * (ver README, secção "Sincronizar tokens com o Figma").
+ * Design System Musify: Carmim escuro (Spotify-like dark crimson theme)
+ * Baseado no Figma com acento carmesim vibrante (#E61C34).
  */
 :root {
   color-scheme: dark;
-  --bg: #15131a;
-  --panel: #1e1b25;
-  --surface: #2a2631;
-  --surface-2: #232029;
-  --line: #3a3544;
-  --accent: #c8bbf0;
-  --accent-strong: #8f6cf0;
-  --on-accent: #1b1823;
-  --muted: #a7a2b3;
-  --energy: #3b2d2e;
-  --track: #3a3544;
+  --bg: #121013;
+  --panel: #18151b;
+  --surface: #241f27;
+  --surface-2: #1e1921;
+  --line: #342a37;
+  --accent: #e61c34;
+  --accent-strong: #ba1024;
+  --on-accent: #ffffff;
+  --muted: #a39ca5;
+  --energy: #45171f;
+  --track: #342a37;
 }
 
 html,
@@ -62,11 +61,12 @@ input[type='range'].slider::-webkit-slider-thumb {
   border-radius: 999px;
   background: #fff;
   opacity: 0;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.15s;
 }
 input[type='range'].slider:hover::-webkit-slider-thumb,
 input[type='range'].slider:focus-visible::-webkit-slider-thumb {
   opacity: 1;
+  transform: scale(1.1);
 }
 input[type='range'].slider::-moz-range-thumb {
   width: 12px;
@@ -77,6 +77,12 @@ input[type='range'].slider::-moz-range-thumb {
 }
 input[type='range'].slider::-moz-range-track {
   background: transparent;
+}
+
+.youtube-player-shell iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

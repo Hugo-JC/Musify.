@@ -6,14 +6,14 @@ class Settings(BaseSettings):
 
     redis_url: str = 'redis://localhost:6379/0'
     cors_origins: str = 'http://localhost:3000'
-
-    # 'proxy' (recomendado) ou 'redirect'
-    stream_mode: str = 'proxy'
+    youtube_api_key: str = ''
+    google_client_id: str = ''
+    google_client_secret: str = ''
+    google_redirect_uri: str = ''
+    frontend_url: str = 'http://localhost:3000'
     ytdlp_max_concurrency: int = 3
     ytdlp_timeout_seconds: int = 20
     rate_limit_per_min: int = 120
-
-    # TTLs em segundos
     ttl_home: int = 3600
     ttl_moods: int = 86400
     ttl_playlist: int = 21600
