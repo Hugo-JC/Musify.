@@ -101,4 +101,4 @@ async def get_track(track_id: str) -> dict[str, Any]:
 
 def stream_url(track_id: str) -> str:
     # Redirect to Audius' own stream endpoint; audio is never stored by Musify.
-    return f"{BASE_URL}/tracks/{track_id}/stream"
+    return f"{BASE_URL}/tracks/{track_id}/stream?app_name=Musify"
