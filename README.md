@@ -34,8 +34,36 @@ REDIS_URL=redis://localhost:6379/0
 
 O backend lê esse arquivo quando iniciado a partir de `apps/api`, e o Docker Compose
 também o carrega para o container da API. O `.env.example` não é rastreado pelo Git;
-não o uses como arquivo de configuração. No Google Cloud Console, regista o mesmo
-valor de `GOOGLE_REDIRECT_URI` como URI de redirecionamento autorizado para o cliente OAuth.
+não o uses como arquivo de configuração.
+
+### Autorizar o callback OAuth no Google
+
+O Google exige que o callback enviado pela API seja registado exatamente no cliente
+OAuth usado pelo backend. Para desenvolvimento local, o valor é:
+
+```text
+http://localhost:8000/api/auth/youtube/callback
+```
+
+1. Abre o [Google Cloud Console](https://console.cloud.google.com/) e seleciona o
+   projeto correspondente ao `GOOGLE_CLIENT_ID` configurado em `apps/api/.env`.
+2. Vai a **APIs e serviços → Credenciais** e abre o ID de cliente OAuth 2.0 usado
+   pelo backend. O tipo da aplicação deve ser **Aplicativo da Web**.
+3. Em **URIs de redirecionamento autorizados**, adiciona exatamente
+   `http://localhost:8000/api/auth/youtube/callback` e guarda.
+   Não o adiciones apenas em **Origens JavaScript autorizadas**.
+4. Confirma que `GOOGLE_REDIRECT_URI` em `apps/api/.env` contém esse mesmo URI,
+   sem espaços nem barra final extra. `localhost` e `127.0.0.1`, HTTP e HTTPS,
+   portas e caminhos diferentes não são equivalentes.
+5. Reinicia a API para ela carregar o `.env` atualizado. Se usas Docker Compose,
+   executa `docker compose up -d --force-recreate api` na raiz do projeto.
+6. Abre a aplicação em `http://localhost:3000` e tenta **Conectar com YouTube**
+   novamente. Se ainda falhar, compara o `redirect_uri` mostrado nos detalhes do
+   erro Google com a lista de URIs autorizados do mesmo ID de cliente OAuth.
+
+O URI exibido no erro `redirect_uri_mismatch` é o que a API realmente enviou.
+Se estiveres a usar outro domínio/porta ou HTTPS, configura o URI público completo
+em `GOOGLE_REDIRECT_URI` e regista exatamente o mesmo valor no cliente OAuth.
 
 ### Backend
 
