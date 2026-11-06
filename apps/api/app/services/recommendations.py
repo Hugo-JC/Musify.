@@ -73,13 +73,15 @@ async def get_liked_tracks(access_token: str, limit: int = 30) -> list[Track]:
 
     videos = await ytm.run(ytm._video_details, ids)
     by_id = {item.get('id'): item for item in videos if item.get('id')}
-    return [
-        track
-        for video_id in ids
-        if (track := ytm.normalize_track(by_id[video_id])) is not None
-        and track.source == 'youtube'
-        and video_id in by_id
-    ]
+    tracks: list[Track] = []
+    for video_id in ids:
+        item = by_id.get(video_id)
+        if not item:
+            continue
+        track = ytm.normalize_track(item)
+        if track:
+            tracks.append(track)
+    return tracks
 
 
 def _seed_query(seeds: list[Track]) -> str:
