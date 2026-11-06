@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Track } from '@/types';
+import { trackKey } from '@/types';
 
-// Biblioteca local (localStorage). A interface está isolada para migrar mais tarde para SQLite/Postgres.
 interface LibraryState {
   liked: Track[];
   toggleLike: (track: Track) => void;
-  isLiked: (videoId: string) => boolean;
+  isLiked: (key: string) => boolean;
 }
 
 export const useLibrary = create<LibraryState>()(
@@ -14,12 +14,12 @@ export const useLibrary = create<LibraryState>()(
     (set, get) => ({
       liked: [],
       toggleLike: (track) =>
-        set((s) =>
-          s.liked.some((t) => t.videoId === track.videoId)
-            ? { liked: s.liked.filter((t) => t.videoId !== track.videoId) }
-            : { liked: [track, ...s.liked] },
+        set((state) =>
+          state.liked.some((item) => trackKey(item) === trackKey(track))
+            ? { liked: state.liked.filter((item) => trackKey(item) !== trackKey(track)) }
+            : { liked: [track, ...state.liked] },
         ),
-      isLiked: (videoId) => get().liked.some((t) => t.videoId === videoId),
+      isLiked: (key) => get().liked.some((item) => trackKey(item) === key),
     }),
     { name: 'musify-library' },
   ),

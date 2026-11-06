@@ -3,13 +3,30 @@ export interface Artist {
   name: string;
 }
 
+export type TrackSource = 'audius' | 'local' | 'youtube';
+
+/** Shared player model. videoId remains optional for legacy YouTube playlists. */
 export interface Track {
-  videoId: string;
+  id?: string;
+  source?: TrackSource;
+  videoId?: string;
+  localId?: string;
+  streamUrl?: string;
   title: string;
   artists: Artist[];
   album?: string | null;
   durationSeconds?: number | null;
   thumbnail?: string | null;
+  license?: string | null;
+  isStreamable?: boolean;
+  isStreamGated?: boolean;
+}
+
+export function trackKey(track: Track): string {
+  if (track.source === 'local') return 'local:' + (track.localId ?? track.id ?? track.title);
+  if (track.source === 'audius') return 'audius:' + (track.id ?? track.title);
+  if (track.videoId) return 'youtube:' + track.videoId;
+  return (track.source ?? 'legacy') + ':' + (track.id ?? track.title);
 }
 
 export interface PlaylistCard {
@@ -45,4 +62,7 @@ export interface SearchResults {
 export type MoodKey = 'focus' | 'unwind' | 'energy';
 export type RepeatMode = 'off' | 'all' | 'one';
 
-export interface YouTubeAccount { connected: boolean; channel: { id: string; title: string; thumbnail?: string } | null }
+export interface YouTubeAccount {
+  connected: boolean;
+  channel: { id: string; title: string; thumbnail?: string } | null;
+}

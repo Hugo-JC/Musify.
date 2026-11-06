@@ -1,40 +1,66 @@
 'use client';
 
-import { Heart, Pause, Play } from 'lucide-react';
+import { Heart, Pause, Play, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 import { Cover } from '@/components/ui/Cover';
 import { artistLine, formatTime } from '@/lib/format';
 import { useLibrary } from '@/stores/useLibrary';
 import { usePlayer } from '@/stores/usePlayer';
-import type { Track } from '@/types';
+import { trackKey, type Track } from '@/types';
 
 interface Props {
   track: Track;
   index: number;
   onPlay: () => void;
   showAlbum?: boolean;
+  onRemove?: () => void;
 }
 
-export function TrackRow({ track, index, onPlay, showAlbum = true }: Props) {
-  const isCurrent = usePlayer((s) => s.queue[s.index]?.videoId === track.videoId);
-  const isPlaying = usePlayer((s) => s.isPlaying);
-  const liked = useLibrary((s) => s.liked.some((t) => t.videoId === track.videoId));
-  const toggleLike = useLibrary((s) => s.toggleLike);
-  const toggle = usePlayer((s) => s.togglePlay);
+export function TrackRow({ track, index, onPlay, showAlbum = true, onRemove }: Props) {
+  const key = trackKey(track);
+  const isCurrent = usePlayer((state) => {
+    const current = state.queue[state.index];
+    return current ? trackKey(current) === key : false;
+  });
+  const isPlaying = usePlayer((state) => state.isPlaying);
+  const liked = useLibrary((state) => state.liked.some((item) => trackKey(item) === key));
+  const toggleLike = useLibrary((state) => state.toggleLike);
+  const toggle = usePlayer((state) => state.togglePlay);
+  const canPlay = track.source !== 'audius' || (track.isStreamable !== false && !track.isStreamGated);
+
+  const columns = showAlbum
+    ? onRemove
+      ? 'grid-cols-[36px_minmax(0,2fr)_minmax(0,1fr)_44px_52px_36px]'
+      : 'grid-cols-[36px_minmax(0,2fr)_minmax(0,1fr)_44px_52px]'
+    : onRemove
+      ? 'grid-cols-[36px_minmax(0,1fr)_44px_52px_36px]'
+      : 'grid-cols-[36px_minmax(0,1fr)_44px_52px]';
 
   return (
     <li
       className={clsx(
         'group grid items-center gap-4 rounded-2xl px-3.5 py-2.5 transition-colors duration-150 hover:bg-surface-2',
         isCurrent && 'bg-surface-2/60 ring-1 ring-accent/30',
-        showAlbum ? 'grid-cols-[36px_minmax(0,2fr)_minmax(0,1fr)_44px_52px]' : 'grid-cols-[36px_minmax(0,1fr)_44px_52px]',
+        columns,
       )}
     >
       <button
         type="button"
-        aria-label={isCurrent && isPlaying ? `Pausar ${track.title}` : `Tocar ${track.title}`}
-        onClick={isCurrent ? toggle : onPlay}
-        className="flex h-9 w-9 items-center justify-center rounded-full text-sm tabular-nums text-muted transition hover:bg-accent/20 hover:text-accent"
+        disabled={!canPlay}
+        aria-label={
+          !canPlay
+            ? 'Esta faixa não está disponível para reprodução'
+            : isCurrent && isPlaying
+              ? `Pausar ${track.title}`
+              : `Tocar ${track.title}`
+        }
+        onClick={() => {
+          if (canPlay) {
+            if (isCurrent) toggle();
+            else onPlay();
+          }
+        }}
+        className="flex h-9 w-9 items-center justify-center rounded-full text-sm tabular-nums text-muted transition hover:bg-accent/20 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
       >
         {isCurrent && isPlaying ? (
           <Pause className="h-4 w-4 fill-accent text-accent" />
@@ -70,6 +96,17 @@ export function TrackRow({ track, index, onPlay, showAlbum = true }: Props) {
       </button>
 
       <span className="text-right text-sm tabular-nums text-muted">{formatTime(track.durationSeconds)}</span>
+
+      {onRemove && (
+        <button
+          type="button"
+          aria-label={`Remover ${track.title} da biblioteca local`}
+          onClick={onRemove}
+          className="flex h-9 w-9 items-center justify-center rounded-full text-muted opacity-0 transition hover:bg-red-500/10 hover:text-red-300 group-hover:opacity-100 focus-visible:opacity-100"
+        >
+          <Trash2 className="h-4 w-4" aria-hidden />
+        </button>
+      )}
     </li>
   );
 }

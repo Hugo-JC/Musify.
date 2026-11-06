@@ -7,6 +7,7 @@ import { Message, Skeleton } from '@/components/ui/States';
 import { TrackRow } from '@/components/ui/TrackRow';
 import { usePlaylist } from '@/lib/hooks';
 import { usePlayer } from '@/stores/usePlayer';
+import { trackKey } from '@/types';
 
 export default function PlaylistPage() {
   const params = useParams<{ id: string }>();
@@ -41,7 +42,7 @@ export default function PlaylistPage() {
       {data.tracks.length ? (
         <ul>
           {data.tracks.map((track, index) => (
-            <TrackRow key={track.videoId + '-' + index} track={track} index={index} onPlay={() => playQueue(data.tracks, index)} />
+            <TrackRow key={trackKey(track) + '-' + index} track={track} index={index} onPlay={() => playQueue(data.tracks, index)} />
           ))}
         </ul>
       ) : (
