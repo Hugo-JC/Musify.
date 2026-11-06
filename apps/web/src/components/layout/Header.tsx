@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AudioLines, Search, UserRound } from 'lucide-react';
+import { AudioLines, Search, User } from 'lucide-react';
 import { useState } from 'react';
 
 export function Header() {
