@@ -7,16 +7,16 @@ import { useLibrary } from '@/stores/useLibrary';
 import { usePlayer } from '@/stores/usePlayer';
 
 export default function LibraryPage() {
-  const liked = useLibrary((s) => s.liked);
-  const playQueue = usePlayer((s) => s.playQueue);
+  const liked = useLibrary((state) => state.liked);
+  const playQueue = usePlayer((state) => state.playQueue);
 
   return (
     <div>
-      <header className="mb-8 flex items-end gap-6">
-        <span className="flex h-[200px] w-[200px] items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 via-purple-600 to-blue-500">
+      <header className="library-hero mb-8 flex items-end gap-6">
+        <span className="library-hero-art flex h-[200px] w-[200px] shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 via-purple-600 to-blue-500">
           <Heart className="h-20 w-20 fill-white text-white" aria-hidden />
         </span>
-        <div>
+        <div className="min-w-0">
           <p className="text-sm text-muted">Playlist</p>
           <h1 className="my-2 text-[40px] font-bold leading-tight">Liked Songs</h1>
           <p className="text-sm text-muted">{liked.length} {liked.length === 1 ? 'song' : 'songs'} · guardadas neste browser</p>
@@ -34,8 +34,8 @@ export default function LibraryPage() {
             <Play className="ml-0.5 h-7 w-7 fill-current" />
           </button>
           <ul>
-            {liked.map((t, i) => (
-              <TrackRow key={t.videoId} track={t} index={i} onPlay={() => playQueue(liked, i)} />
+            {liked.map((track, index) => (
+              <TrackRow key={track.videoId} track={track} index={index} onPlay={() => playQueue(liked, index)} />
             ))}
           </ul>
         </>

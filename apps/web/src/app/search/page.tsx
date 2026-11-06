@@ -12,19 +12,20 @@ import type { PlaylistCard } from '@/types';
 
 function CardGrid({ title, cards }: { title: string; cards: PlaylistCard[] }) {
   if (!cards.length) return null;
+
   return (
     <section className="mb-8">
-      <h2 className="mb-3 text-xl font-bold">{title}</h2>
-      <div className="grid grid-cols-4 gap-4">
-        {cards.slice(0, 4).map((c) => (
+      <h2 className="mb-4 text-xl font-bold">{title}</h2>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {cards.slice(0, 6).map((card) => (
           <Link
-            key={c.id}
-            href={c.kind === 'artist' ? `/search?q=${encodeURIComponent(c.title)}` : `/playlist/${encodeURIComponent(c.id)}`}
-            className="rounded-card bg-surface-2 p-4 transition-colors hover:bg-surface"
+            key={card.id}
+            href={card.kind === 'artist' ? '/search?q=' + encodeURIComponent(card.title) : '/playlist/' + encodeURIComponent(card.id)}
+            className="rounded-2xl border border-white/[0.035] bg-surface-2 p-4 transition-colors hover:bg-surface"
           >
-            <Cover src={c.thumbnail} alt={c.title} round={c.kind === 'artist'} className="aspect-square w-full text-3xl" />
-            <p className="mt-3 truncate text-sm font-semibold">{c.title}</p>
-            <p className="truncate text-xs text-muted">{c.subtitle}</p>
+            <Cover src={card.thumbnail} alt={card.title} round={card.kind === 'artist'} className="aspect-square w-full text-3xl" />
+            <p className="mt-3 truncate text-sm font-semibold">{card.title}</p>
+            <p className="truncate text-xs text-muted">{card.subtitle}</p>
           </Link>
         ))}
       </div>
@@ -33,32 +34,32 @@ function CardGrid({ title, cards }: { title: string; cards: PlaylistCard[] }) {
 }
 
 function Results() {
-  const q = useSearchParams().get('q')?.trim() ?? '';
-  const { data, isLoading, isError } = useSearch(q);
-  const playQueue = usePlayer((s) => s.playQueue);
+  const query = useSearchParams().get('q')?.trim() ?? '';
+  const { data, isLoading, isError } = useSearch(query);
+  const playQueue = usePlayer((state) => state.playQueue);
 
-  if (!q) return <Message title="Search for songs, albums and playlists" hint="Usa a barra de pesquisa no topo." />;
+  if (!query) return <Message title="Procura músicas, artistas ou playlists" hint="Escreve na barra de pesquisa para começar." />;
   if (isLoading) return <Skeleton className="h-64" />;
-  if (isError || !data) return <Message title="Não foi possível pesquisar" hint="Confirma que a API está a correr e tenta novamente." />;
+  if (isError || !data) return <Message title="Não foi possível pesquisar" hint="Confirma a ligação à API e tenta novamente." />;
 
   const empty = !data.songs.length && !data.playlists.length && !data.albums.length && !data.artists.length;
-  if (empty) return <Message title={`Sem resultados para «${q}»`} hint="Experimenta outro termo." />;
+  if (empty) return <Message title={'Sem resultados para «' + query + '»'} hint="Experimenta outro termo." />;
 
   return (
     <>
       {data.songs.length > 0 && (
         <section className="mb-8">
-          <h2 className="mb-3 text-xl font-bold">Songs</h2>
+          <h2 className="mb-4 text-xl font-bold">Músicas</h2>
           <ul>
-            {data.songs.map((t, i) => (
-              <TrackRow key={t.videoId} track={t} index={i} onPlay={() => playQueue(data.songs, i)} />
+            {data.songs.map((track, index) => (
+              <TrackRow key={track.videoId} track={track} index={index} onPlay={() => playQueue(data.songs, index)} />
             ))}
           </ul>
         </section>
       )}
       <CardGrid title="Playlists" cards={data.playlists} />
-      <CardGrid title="Albums" cards={data.albums} />
-      <CardGrid title="Artists" cards={data.artists} />
+      <CardGrid title="Álbuns" cards={data.albums} />
+      <CardGrid title="Artistas" cards={data.artists} />
     </>
   );
 }
@@ -66,7 +67,7 @@ function Results() {
 export default function SearchPage() {
   return (
     <div>
-      <h1 className="mb-6 text-[32px] font-bold">Search</h1>
+      <h1 className="mb-6 text-[32px] font-bold tracking-tight">Pesquisar</h1>
       <Suspense fallback={<Skeleton className="h-64" />}>
         <Results />
       </Suspense>
