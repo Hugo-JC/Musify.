@@ -44,3 +44,5 @@ export interface SearchResults {
 
 export type MoodKey = 'focus' | 'unwind' | 'energy';
 export type RepeatMode = 'off' | 'all' | 'one';
+
+export interface YouTubeAccount { connected: boolean; channel: { id: string; title: string; thumbnail?: string } | null }

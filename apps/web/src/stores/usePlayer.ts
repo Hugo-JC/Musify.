@@ -1,7 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getAudio } from '@/lib/audio';
 import type { RepeatMode, Track } from '@/types';
+
+let externalSeekHandler: ((t: number) => void) | null = null;
+export const setPlayerSeekHandler = (handler: ((t: number) => void) | null) => {
+  externalSeekHandler = handler;
+};
 
 interface PlayerState {
   queue: Track[];
@@ -29,7 +33,6 @@ interface PlayerState {
   patch: (p: Partial<PlayerState>) => void;
 }
 
-// Histórico de índices para o botão "anterior" (útil com shuffle).
 const history: number[] = [];
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
@@ -82,12 +85,9 @@ export const usePlayer = create<PlayerState>()(
       next: (auto = false) => {
         const { queue, index, repeat, shuffle, nextIndex } = get();
         if (!queue.length) return;
-        const audio = getAudio();
         if (auto && repeat === 'one') {
-          if (audio) {
-            audio.currentTime = 0;
-            void audio.play();
-          }
+          if (externalSeekHandler) externalSeekHandler(0);
+          set({ currentTime: 0, isPlaying: true });
           return;
         }
         let n: number;
@@ -104,15 +104,12 @@ export const usePlayer = create<PlayerState>()(
           if (repeat === 'all') n = 0;
           else {
             set({ isPlaying: false, currentTime: 0, nextIndex: null });
-            if (audio) audio.currentTime = 0;
             return;
           }
         }
         if (n === index) {
-          if (audio) {
-            audio.currentTime = 0;
-            void audio.play();
-          }
+          if (externalSeekHandler) externalSeekHandler(0);
+          set({ currentTime: 0, isPlaying: true });
           return;
         }
         history.push(index);
@@ -120,23 +117,26 @@ export const usePlayer = create<PlayerState>()(
       },
 
       prev: () => {
-        const audio = getAudio();
-        if (audio && audio.currentTime > 3) {
-          audio.currentTime = 0;
+        const { currentTime } = get();
+        if (currentTime > 3) {
+          if (externalSeekHandler) externalSeekHandler(0);
+          set({ currentTime: 0 });
           return;
         }
         const back = history.pop();
         const target = back !== undefined ? back : get().index - 1;
         if (target >= 0) {
           set({ index: target, nextIndex: null, currentTime: 0, duration: 0, error: null, isPlaying: true });
-        } else if (audio) {
-          audio.currentTime = 0;
+        } else {
+          if (externalSeekHandler) externalSeekHandler(0);
+          set({ currentTime: 0 });
         }
       },
 
       seek: (t) => {
-        const audio = getAudio();
-        if (audio) audio.currentTime = t;
+        if (externalSeekHandler) {
+          externalSeekHandler(t);
+        }
         set({ currentTime: t });
       },
 

@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from .cache import cache
 from .config import settings
 from .routers import meta, stream
+from . import auth
 
 logging.basicConfig(level=logging.INFO)
 
@@ -17,7 +18,6 @@ async def lifespan(_: FastAPI):
     if not await cache.ping():
         logging.getLogger('musify').warning('Redis indisponível, a usar cache em memória.')
     yield
-    await stream.client.aclose()
     await cache.close()
 
 
@@ -28,7 +28,8 @@ app.add_middleware(
     allow_origins=settings.cors_list,
     allow_methods=['GET', 'POST'],
     allow_headers=['*'],
-    expose_headers=['X-Cache', 'Content-Range', 'Accept-Ranges'],
+    allow_credentials=True,
+    expose_headers=['X-Cache'],
 )
 
 
@@ -52,3 +53,4 @@ async def health():
 
 app.include_router(meta.router, prefix='/api')
 app.include_router(stream.router, prefix='/api')
+app.include_router(auth.router, prefix='/api')
