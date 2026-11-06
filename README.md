@@ -20,7 +20,7 @@ A API Audius é de leitura para pesquisa e descoberta; uma API key é opcional e
 
 ## Configuração
 
-Cria `apps/api/.env`:
+Cria `apps/api/.env` com as credenciais do Google OAuth:
 
 ```env
 YOUTUBE_API_KEY=
@@ -31,6 +31,11 @@ GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/youtube/callback
 FRONTEND_URL=http://localhost:3000
 REDIS_URL=redis://localhost:6379/0
 ```
+
+O backend lê esse arquivo quando iniciado a partir de `apps/api`, e o Docker Compose
+também o carrega para o container da API. O `.env.example` não é rastreado pelo Git;
+não o uses como arquivo de configuração. No Google Cloud Console, regista o mesmo
+valor de `GOOGLE_REDIRECT_URI` como URI de redirecionamento autorizado para o cliente OAuth.
 
 ### Backend
 

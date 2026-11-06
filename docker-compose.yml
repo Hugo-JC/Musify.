@@ -10,6 +10,8 @@ services:
 
   api:
     build: ./apps/api
+    env_file:
+      - ./apps/api/.env
     environment:
       REDIS_URL: redis://redis:6379/0
       CORS_ORIGINS: http://localhost:3000
