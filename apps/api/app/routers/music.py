@@ -24,6 +24,7 @@ def _serialize_youtube_tracks(tracks) -> list[dict]:
 
 async def _youtube_search_first(query: str, limit: int) -> dict:
     fallback_reason = "empty"
+    fallback_code = None
     try:
         tracks = await ytm.run(ytm.search_music_tracks, query, limit)
         if tracks:
@@ -34,9 +35,10 @@ async def _youtube_search_first(query: str, limit: int) -> dict:
     except HTTPException as exc:
         fallback_reason = "unavailable"
         detail = exc.detail if isinstance(exc.detail, dict) else {}
+        fallback_code = detail.get("code")
         log.warning(
             "YouTube search unavailable; falling back to Audius (%s)",
-            detail.get("code", exc.status_code),
+            fallback_code or exc.status_code,
         )
 
     tracks = await audius.search_tracks(query, limit)
@@ -44,11 +46,13 @@ async def _youtube_search_first(query: str, limit: int) -> dict:
         "provider": "audius" if tracks else "youtube",
         "tracks": tracks,
         "fallbackReason": fallback_reason,
+        "fallbackCode": fallback_code,
     }
 
 
 async def _youtube_trending_first(limit: int) -> dict:
     fallback_reason = "empty"
+    fallback_code = None
     try:
         tracks = await ytm.run(
             ytm.trending_music_tracks,
@@ -63,9 +67,10 @@ async def _youtube_trending_first(limit: int) -> dict:
     except HTTPException as exc:
         fallback_reason = "unavailable"
         detail = exc.detail if isinstance(exc.detail, dict) else {}
+        fallback_code = detail.get("code")
         log.warning(
             "YouTube trending unavailable; falling back to Audius (%s)",
-            detail.get("code", exc.status_code),
+            fallback_code or exc.status_code,
         )
 
     tracks = await audius.trending_tracks(limit)
@@ -73,6 +78,7 @@ async def _youtube_trending_first(limit: int) -> dict:
         "provider": "audius" if tracks else "youtube",
         "tracks": tracks,
         "fallbackReason": fallback_reason,
+        "fallbackCode": fallback_code,
     }
 
 
@@ -84,6 +90,23 @@ async def _cached_track(track_id: str) -> dict:
         lambda: audius.get_track(track_id),
     )
     return track
+
+
+@router.get("/providers")
+async def providers():
+    """Safe configuration diagnostics; never expose API keys or OAuth secrets."""
+    return {
+        "priority": "youtube",
+        "youtube": {
+            "configured": bool(settings.youtube_api_key),
+            "regionCode": settings.youtube_region_code.upper(),
+        },
+        "audius": {
+            "configured": True,
+            "apiKeyConfigured": bool(settings.audius_api_key),
+            "role": "fallback",
+        },
+    }
 
 
 @router.get("/search")
@@ -103,7 +126,7 @@ async def search(
         )
 
     digest = hashlib.sha256(query.casefold().encode()).hexdigest()[:20]
-    key = f"music:search:v2:{digest}:{limit}"
+    key = f"music:search:v3:{digest}:{limit}"
     data, hit = await cache.get_or_set(
         key,
         settings.ttl_search,
@@ -118,7 +141,7 @@ async def trending(
     response: Response,
     limit: int = Query(default=20, ge=1, le=25),
 ):
-    key = f"music:trending:v2:{settings.youtube_region_code.upper()}:{limit}"
+    key = f"music:trending:v3:{settings.youtube_region_code.upper()}:{limit}"
     data, hit = await cache.get_or_set(
         key,
         settings.ttl_home,
@@ -148,6 +171,7 @@ async def recommendations(
 
     async def load():
         fallback_reason = "empty"
+        fallback_code = None
         personalized = False
         try:
             if account:
@@ -170,9 +194,10 @@ async def recommendations(
         except HTTPException as exc:
             fallback_reason = "unavailable"
             detail = exc.detail if isinstance(exc.detail, dict) else {}
+            fallback_code = detail.get("code")
             log.warning(
                 "YouTube recommendations unavailable; falling back to Audius (%s)",
-                detail.get("code", exc.status_code),
+                fallback_code or exc.status_code,
             )
 
         fallback = await audius.trending_tracks(limit)
@@ -181,6 +206,7 @@ async def recommendations(
             "personalized": False,
             "tracks": fallback,
             "fallbackReason": fallback_reason,
+            "fallbackCode": fallback_code,
         }
 
     data, hit = await cache.get_or_set(key, settings.ttl_recommendations, load)

@@ -1,8 +1,10 @@
 import time
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.cache import cache
+from app.config import settings
 from app.main import app
 from app.routers import music
 from app.schemas import Artist, Track
@@ -22,6 +24,16 @@ def test_auth_status_unauthenticated():
         r = c.get('/api/auth/youtube/status')
         assert r.status_code == 200
         assert r.json() == {'connected': False, 'channel': None}
+
+
+def test_provider_diagnostics_do_not_expose_secrets():
+    with TestClient(app) as client:
+        response = client.get('/api/music/providers')
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload['priority'] == 'youtube'
+    assert payload['youtube']['configured'] is bool(settings.youtube_api_key)
+    assert 'apiKey' not in payload['youtube']
 
 
 def test_unknown_mood():
@@ -131,6 +143,7 @@ def test_recommendations_are_cached_per_channel(monkeypatch):
     assert calls == [7]
 
 
+@pytest.mark.asyncio
 async def test_get_or_set_caches():
     calls = 0
 

@@ -119,7 +119,7 @@ def _video_details(ids: list[str]) -> list[dict[str, Any]]:
 
 
 def search_music_tracks(query: str, limit: int = 20) -> list[Track]:
-    """Search embeddable music-category videos and hydrate their duration/status."""
+    """Search embeddable videos without assuming creators tagged them as Music."""
     query = query.strip()
     if not query:
         return []
@@ -127,7 +127,8 @@ def search_music_tracks(query: str, limit: int = 20) -> list[Track]:
     results = _request('search', {
         'part': 'snippet',
         'type': 'video',
-        'videoCategoryId': '10',
+        # Do not force videoCategoryId=10: official music videos are often
+        # categorized as Entertainment or People & Blogs by their publishers.
         'videoEmbeddable': 'true',
         'safeSearch': 'moderate',
         'q': query,
@@ -223,7 +224,6 @@ def search_all(query: str, limit: int = 8) -> SearchResults:
     videos = _request('search', {
         'part': 'snippet',
         'type': 'video',
-        'videoCategoryId': '10',
         'videoEmbeddable': 'true',
         'q': query,
         'maxResults': min(limit, 50),
