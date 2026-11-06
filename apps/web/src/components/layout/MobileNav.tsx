@@ -9,7 +9,7 @@ const ITEMS = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/search', label: 'Pesquisar', icon: Search },
   { href: '/library', label: 'Favoritos', icon: Heart },
-  { href: '/account', label: 'Conta', icon: UserRound },
+  { href: '/account', label: 'Conta', icon: User },
 ];
 
 export function MobileNav() {
