@@ -3,12 +3,13 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { MobileNav } from '@/components/layout/MobileNav';
 import { PlaybackBar } from '@/components/player/PlaybackBar';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: 'Musify',
-  description: 'Streaming de música com Next.js, FastAPI e Redis.',
+  description: 'A tua biblioteca musical num espaço simples, rápido e organizado.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -16,11 +17,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-PT">
       <body>
         <Providers>
-          <div className="grid h-screen min-w-[1100px] grid-cols-shell grid-rows-shell">
+          <div className="app-shell">
             <Header />
             <Sidebar />
-            <main className="scroll-panel mb-4 mr-4 mt-2 min-h-0 overflow-y-auto rounded-panel bg-panel p-6">{children}</main>
+            <main className="main-content scroll-panel">{children}</main>
             <PlaybackBar />
+            <MobileNav />
           </div>
         </Providers>
       </body>
