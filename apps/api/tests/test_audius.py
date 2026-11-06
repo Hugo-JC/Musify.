@@ -34,11 +34,18 @@ def test_normalize_audius_track():
     }
 
 
-def test_normalize_skips_unavailable_or_missing_id():
+def test_normalize_skips_unavailable_private_or_missing_id():
     assert normalize_track({"title": "Missing ID"}) is None
     assert normalize_track({"id": 1, "is_available": False}) is None
     assert normalize_track({"id": 1, "is_delete": True}) is None
+    assert normalize_track({"id": 1, "is_private": True}) is None
     assert normalize_track({"id": "../bad", "is_streamable": True}) is None
+
+
+def test_normalize_defaults_streamability_when_field_is_absent():
+    track = normalize_track({"id": 10, "title": "Public track"})
+    assert track["isStreamable"] is True
+    assert track["isStreamGated"] is False
 
 
 def test_normalize_stream_permissions():
@@ -53,10 +60,15 @@ def test_normalize_stream_permissions():
         "is_streamable": True,
         "stream_conditions": {"follow": {"user_id": "artist"}},
     })
+    gated_by_authority = normalize_track({
+        "id": 4,
+        "access_authorities": ["0xabc"],
+    })
 
     assert unavailable["isStreamable"] is False
     assert gated_by_flag["isStreamGated"] is True
     assert gated_by_conditions["isStreamGated"] is True
+    assert gated_by_authority["isStreamGated"] is True
 
 
 def test_stream_endpoint_rejects_gated_track(monkeypatch):

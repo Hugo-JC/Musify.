@@ -40,10 +40,7 @@ async def _get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any
         if response.status_code == 404:
             raise HTTPException(
                 404,
-                detail={
-                    "code": "AUDIUS_NOT_FOUND",
-                    "message": "Conteúdo não encontrado.",
-                },
+                detail={"code": "AUDIUS_NOT_FOUND", "message": "Conteúdo não encontrado."},
             )
         if response.is_redirect:
             raise HTTPException(
@@ -97,6 +94,7 @@ def normalize_track(item: dict[str, Any]) -> dict[str, Any] | None:
         track_id is None
         or item.get("is_available") is False
         or item.get("is_delete") is True
+        or item.get("is_private") is True
     ):
         return None
 
@@ -121,9 +119,21 @@ def normalize_track(item: dict[str, Any]) -> dict[str, Any] | None:
     except (TypeError, ValueError, OverflowError):
         duration_seconds = None
 
-    is_stream_gated = bool(item.get("is_stream_gated")) or bool(
-        item.get("stream_conditions")
+    access_authorities = item.get("access_authorities")
+    has_access_authorities = bool(
+        access_authorities if isinstance(access_authorities, (list, dict, str)) else False
     )
+    is_stream_gated = (
+        bool(item.get("is_stream_gated"))
+        or bool(item.get("stream_conditions"))
+        or has_access_authorities
+    )
+
+    # Audius does not guarantee an is_streamable field in every track response.
+    # Respect it when present; otherwise the official stream endpoint decides.
+    is_streamable = item.get("is_streamable")
+    if is_streamable is None:
+        is_streamable = True
 
     return {
         "id": track_id,
@@ -136,7 +146,7 @@ def normalize_track(item: dict[str, Any]) -> dict[str, Any] | None:
         "permalink": item.get("permalink"),
         "streamUrl": f"/api/music/tracks/{track_id}/stream",
         "license": item.get("license"),
-        "isStreamable": bool(item.get("is_streamable", False)),
+        "isStreamable": bool(is_streamable),
         "isStreamGated": is_stream_gated,
     }
 
@@ -172,10 +182,7 @@ async def get_track(track_id: str) -> dict[str, Any]:
     if not is_valid_track_id(track_id):
         raise HTTPException(
             422,
-            detail={
-                "code": "INVALID_TRACK_ID",
-                "message": "Identificador de faixa inválido.",
-            },
+            detail={"code": "INVALID_TRACK_ID", "message": "Identificador de faixa inválido."},
         )
 
     payload = await _get(f"/tracks/{track_id}")
@@ -185,10 +192,7 @@ async def get_track(track_id: str) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise HTTPException(
             404,
-            detail={
-                "code": "AUDIUS_NOT_FOUND",
-                "message": "Faixa não encontrada.",
-            },
+            detail={"code": "AUDIUS_NOT_FOUND", "message": "Faixa não encontrada."},
         )
 
     track = normalize_track(data)
@@ -207,10 +211,7 @@ def stream_url(track_id: str) -> str:
     if not is_valid_track_id(track_id):
         raise HTTPException(
             422,
-            detail={
-                "code": "INVALID_TRACK_ID",
-                "message": "Identificador de faixa inválido.",
-            },
+            detail={"code": "INVALID_TRACK_ID", "message": "Identificador de faixa inválido."},
         )
     query = urlencode({"app_name": "Musify"})
     return f"{BASE_URL}/tracks/{track_id}/stream?{query}"
