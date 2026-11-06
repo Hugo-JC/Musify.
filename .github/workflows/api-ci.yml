@@ -6,7 +6,9 @@ on:
       - "apps/api/**"
       - ".github/workflows/api-ci.yml"
   push:
-    branches: [main]
+    branches:
+      - main
+      - feat/youtube-first-discovery
     paths:
       - "apps/api/**"
       - ".github/workflows/api-ci.yml"
