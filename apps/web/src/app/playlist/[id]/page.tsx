@@ -12,21 +12,19 @@ export default function PlaylistPage() {
   const params = useParams<{ id: string }>();
   const id = decodeURIComponent(params.id);
   const { data, isLoading, isError } = usePlaylist(id);
-  const playQueue = usePlayer((s) => s.playQueue);
+  const playQueue = usePlayer((state) => state.playQueue);
 
   if (isLoading) return <Skeleton className="h-72" />;
-  if (isError || !data) return <Message title="Playlist indisponível" hint="Não foi possível carregar esta playlist. Confirma que a API está a correr." />;
+  if (isError || !data) return <Message title="Playlist indisponível" hint="Não foi possível carregar esta playlist. Confirma a ligação à API e tenta novamente." />;
 
   return (
     <div>
-      <header className="mb-8 flex items-end gap-6">
-        <Cover src={data.thumbnail} alt={data.title} className="h-[200px] w-[200px] rounded-2xl text-5xl" />
+      <header className="playlist-hero mb-8 flex items-end gap-6">
+        <Cover src={data.thumbnail} alt={data.title} className="playlist-hero-art h-[200px] w-[200px] shrink-0 rounded-2xl text-5xl" />
         <div className="min-w-0">
           <p className="text-sm text-muted">Playlist</p>
           <h1 className="my-2 line-clamp-2 text-[40px] font-bold leading-tight">{data.title}</h1>
-          <p className="text-sm text-muted">
-            {[data.author, `${data.trackCount} faixas`].filter(Boolean).join(' · ')}
-          </p>
+          <p className="text-sm text-muted">{[data.author, data.trackCount + ' faixas'].filter(Boolean).join(' · ')}</p>
         </div>
       </header>
 
@@ -42,8 +40,8 @@ export default function PlaylistPage() {
 
       {data.tracks.length ? (
         <ul>
-          {data.tracks.map((t, i) => (
-            <TrackRow key={`${t.videoId}-${i}`} track={t} index={i} onPlay={() => playQueue(data.tracks, i)} />
+          {data.tracks.map((track, index) => (
+            <TrackRow key={track.videoId + '-' + index} track={track} index={index} onPlay={() => playQueue(data.tracks, index)} />
           ))}
         </ul>
       ) : (
