@@ -299,6 +299,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .playback-controls { display: flex; align-items: center; justify-content: center; gap: clamp(.5rem, 1.4vw, 1.25rem); }
 .playback-controls button { color: #bdb5ba; }
 .playback-controls button:hover { color: #fff; }
+.playback-controls .primary-play { color: #fff; }
 .playback-controls .is-active { color: var(--accent); }
 .playback-progress { display: flex; width: 100%; min-width: 0; align-items: center; gap: .65rem; color: #b7afb4; font-size: .7rem; }
 .playback-volume { grid-area: volume; display: flex; min-width: 0; align-items: center; justify-content: flex-end; gap: .7rem; }
