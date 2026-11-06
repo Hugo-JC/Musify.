@@ -81,8 +81,8 @@ button { -webkit-tap-highlight-color: transparent; }
 
 .brand-mark {
   display: grid;
-  width: 2.65rem;
-  height: 2.65rem;
+  width: 3rem;
+  height: 3rem;
   flex: 0 0 auto;
   place-items: center;
   border: 1px solid rgba(255,255,255,.07);
@@ -92,10 +92,10 @@ button { -webkit-tap-highlight-color: transparent; }
   box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
 }
 
-.brand-mark svg { width: 1.45rem; height: 1.45rem; stroke-width: 2.8; }
+.brand-mark svg { width: 1.65rem; height: 1.65rem; stroke-width: 2.8; }
 
 .brand-word {
-  font-size: 1.65rem;
+  font-size: 1.95rem;
   font-weight: 780;
   letter-spacing: -.055em;
   line-height: 1;
@@ -212,7 +212,7 @@ button { -webkit-tap-highlight-color: transparent; }
   transition: background .2s ease, color .2s ease, transform .2s cubic-bezier(.2,.8,.2,1);
 }
 
-.sidebar-link:hover { background: #202024; color: #fff; transform: translateX(2px); }
+.sidebar-link:hover { background: #202024; color: #fff; }
 .sidebar-link:active { transform: scale(.985); }
 .sidebar-link.is-active { background: rgba(237,23,64,.14); color: #ff8ca3; box-shadow: inset 0 0 0 1px rgba(237,23,64,.16); }
 .sidebar-link.is-active svg { fill: currentColor; stroke: currentColor; }
@@ -242,7 +242,7 @@ button { -webkit-tap-highlight-color: transparent; }
   transition: background .2s ease, transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s ease;
 }
 .library-item:hover, .library-item.is-active { background: #1e1e21; }
-.library-item:hover { transform: translateX(3px); }
+.library-item:hover { color: #fff; }
 .library-item:active { transform: scale(.985); }
 .library-cover {
   display: grid;
