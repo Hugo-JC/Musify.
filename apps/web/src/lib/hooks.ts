@@ -2,9 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-
 import { usePlayer } from '@/stores/usePlayer';
-import type { HomeData, MoodKey } from '@/types';
+import type { MoodKey } from '@/types';
 
 export function useHome() {
   return useQuery({
@@ -26,7 +25,12 @@ export function useMood(key: MoodKey | null) {
 }
 
 export function usePlaylist(id: string) {
-  return useQuery({ queryKey: ['playlist', id], queryFn: () => api.playlist(id), staleTime: 10 * 60_000, retry: 1 });
+  return useQuery({
+    queryKey: ['playlist', id],
+    queryFn: () => api.playlist(id),
+    staleTime: 10 * 60_000,
+    retry: 1,
+  });
 }
 
 export function useSearch(q: string) {
@@ -39,12 +43,20 @@ export function useSearch(q: string) {
   });
 }
 
-/** Carrega uma playlist e começa a tocá-la. */
+export function useAudiusTrending() {
+  return useQuery({
+    queryKey: ['music', 'audius', 'trending'],
+    queryFn: api.trending,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+}
+
+/** Carrega uma playlist legada e começa a tocá-la. */
 export function usePlayPlaylist() {
-  const playQueue = usePlayer((s) => s.playQueue);
+  const playQueue = usePlayer((state) => state.playQueue);
   return async (id: string) => {
-    
-    const pl = await api.playlist(id);
-    playQueue(pl.tracks, 0);
+    const playlist = await api.playlist(id);
+    playQueue(playlist.tracks, 0);
   };
 }
