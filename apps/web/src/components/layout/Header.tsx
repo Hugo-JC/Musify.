@@ -39,7 +39,7 @@ export function Header() {
 
       <div className="header-actions">
         <Link href="/account" className="header-account" aria-label="Abrir conta YouTube" title="Conta">
-          <UserRound className="h-5 w-5" strokeWidth={2.1} aria-hidden />
+          <User className="h-5 w-5" strokeWidth={2.1} aria-hidden />
         </Link>
       </div>
     </header>

@@ -1,17 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-// Stub de localStorage (ambiente node) para o middleware persist
-const mem = new Map<string, string>();
-(globalThis as unknown as { localStorage: Storage }).localStorage = {
-  getItem: (k: string) => mem.get(k) ?? null,
-  setItem: (k: string, v: string) => void mem.set(k, v),
-  removeItem: (k: string) => void mem.delete(k),
-  clear: () => mem.clear(),
-  key: () => null,
-  length: 0,
-} as Storage;
-
-
 import { usePlayer } from './usePlayer';
 import { formatTime } from '@/lib/format';
 import type { Track } from '@/types';
