@@ -68,7 +68,7 @@ async def callback(request: Request, state: str = '', code: str = '', error: str
             )
             channel_response.raise_for_status()
             channels = channel_response.json().get('items', [])
-    except (httpx.HTTPError, KeyError, ValueError) as exc:
+    except (httpx.HTTPError, KeyError, ValueError):
         return RedirectResponse(f'{frontend}/account?youtube=exchange_error', status_code=303)
     if not channels:
         return RedirectResponse(f'{frontend}/account?youtube=no_channel', status_code=303)

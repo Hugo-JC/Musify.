@@ -10,6 +10,7 @@ class Artist(BaseModel):
 
 class Track(BaseModel):
     videoId: str
+    source: Literal['youtube'] = 'youtube'
     title: str
     artists: list[Artist] = Field(default_factory=list)
     album: str | None = None
