@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     redis_url: str = 'redis://localhost:6379/0'
     cors_origins: str = 'http://localhost:3000'
     youtube_api_key: str = ''
+    youtube_region_code: str = 'AO'
     audius_api_key: str = ''
     google_client_id: str = ''
     google_client_secret: str = ''
@@ -19,6 +20,7 @@ class Settings(BaseSettings):
     ttl_moods: int = 86400
     ttl_playlist: int = 21600
     ttl_search: int = 1800
+    ttl_recommendations: int = 21600
 
     @property
     def cors_list(self) -> list[str]:
