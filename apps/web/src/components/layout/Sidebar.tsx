@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Heart, Home, LibraryBig, Search, UserRound } from 'lucide-react';
+import { Heart, Home, Library, Search, User } from 'lucide-react';
 import clsx from 'clsx';
 import { useLibrary } from '@/stores/useLibrary';
 
